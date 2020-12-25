@@ -1,92 +1,75 @@
 #calculator in polish notation
 import os
 import datetime
-def check_num(num):
+operations ={'+','-','*','/','add','sub','mul','div'}
+def isOper(num) -> bool:
+    for i in operations:
+        if num == i:
+            return True
+    else :
+        return False
+def isNum(num) -> bool:
 	try:
 		float(num)
 		return True
 	except ValueError:
 		return False
-
-def oper(exp):
-	error = 0
-	for i in range(1,len(exp)):
-		if (exp[0].isnumeric() or not check_num(exp[i])):
-			error = "Invalid expression"
-	
-	if (error ==0):
-		result = float(exp[1])
-		if (exp[0]=="+" or exp[0] == "add"):
-			for i in range(2,len(exp)):
-					result+=float(exp[i])
-		elif (exp[0]=="-" or exp[0] == "sub"):
-			for i in range(2,len(exp)):
-				result-=float(exp[i])
-		elif (exp[0]=="*" or exp[0] == "mul"):
-			for i in range(2,len(exp)):
-				result*=float(exp[i])
-		elif (exp[0]=="/" or exp[0] == "div"):
-			for i in range(2,len(exp)):
-				if (exp[i] == "0"):
-					error = "Divizion by zero"
-					break
-				result/=float(exp[i])
-		else:
-			error = "Invalid operation"
-		date = datetime.datetime.now()
-		if (error==0):
-			if (result == int(result)):
-				result = int(result)
-			with open(os.path.join(os.getcwd(),"info.txt"),"a") as f:
-				f.write(str(date))
-				f.write(" :: INFO :: ")
-				f.write(str(exp))
-				f.write(" :: ")
-				f.write(str(result))
-				f.write("\n")
-			print("Result: ",result)
-			print("Report: INFO-",len(exp) -2, ", ERROR-0")
-		else:
-			with open(os.path.join(os.getcwd(),"error.txt"),"a") as f:
-				f.write(str(date))
-				f.write(" :: ERROR :: ")
-				f.write(str(error))
-				f.write(" :: ")
-				f.write(str(exp))
-				f.write("\n")
-			print("Error: ",error)
-			print("Report: INFO-",len(exp) -2, ", ERROR-1")
-	else:
-		date = datetime.datetime.now()
-		with open(os.path.join(os.getcwd(),"error.txt"),"a") as f:
-				f.write(str(date))
-				f.write(" :: ERROR :: ")
-				f.write(str(error))
-				f.write(" :: ")
-				f.write(str(exp))
-				f.write("\n")
-		print("Error: ",error)
-		print("Report: INFO-",len(exp) -2, ", ERROR-1")
-
+opCount = 0
+def isCor(exp) -> bool:
+    if len(exp) < 3:
+        return False
+    if isNum(exp[len(exp)-3]) or isOper(exp[len(exp)-2]) or isOper(exp[len(exp)-1]):
+        return False
+    for i in exp:
+        if not isOper(i) and not isNum(i):
+            return False
+        elif isOper(i):
+            global opCount
+            opCount += 1
+    else :
+        return True
+    
+def oper(op1,num1,num2):
+    if op1 == '+' or op1 == 'add':
+        return float(num1) + float(num2)
+    elif op1 == '-' or op1 == 'sub':
+        return float(num1) - float(num2)
+    elif op1 == '*' or op1 == 'mul':
+        return float(num1) * float(num2)
+    elif op1 == '/' or op1 == 'div':
+        if (not str(num2) == '0'):
+            return float(num1) / float(num2)
+        else :
+            print("Error: Zero Division")
+            print("Report: INFO-",opCount, ", ERROR-1")
+            date = datetime.datetime.now()
+            with open(os.path.join(os.getcwd(),"error.txt"),"a") as f:
+                text = f'{str(date)} :: ERROR :: Zero Division  :: {ex} \n'
+                f.write(text)
+            exit()
+    
 ex = input("Expression:")
-space = list()
-for i in range(0,len(ex)):
-	if (ex[i] == " "):
-		space.append(i)
-
-exp = list()
-if (not space[0]==0):
-	exp.append(ex[:space[0]])
-
-for i in range(0,len(space)-1):
-	if (space[i]+1==space[i+1]):
-		continue
-	exp.append(ex[space[i]+1:space[i+1]])
-
-if (not space[len(space)-1] == len(ex)-1):
-	exp.append(ex[space[len(space)-1]+1:])
-
-oper(exp)
-	
-
-
+ex = ex.split()
+if (isCor(ex)):
+    for i in range(len(ex)-1,-1,-1):
+        if (isOper(ex[i]) and isNum(ex[i+1]) and isNum(ex[i+2])):
+            op = oper(ex[i],ex[i+1],ex[i+2])
+        elif (isOper(ex[i]) and isNum(ex[i+1]) and isOper(ex[i+2])):
+            op = oper(ex[i],ex[i+1],op)
+        elif (isOper(ex[i]) and isOper(ex[i+1])):
+            op = oper(ex[i],oper(ex[i+1],ex[i+2],ex[i+3]),op)
+    if (op == int(op)):
+        op = int(op)   
+    print("Result: ", op)
+    print("Report: INFO-",opCount, ", ERROR-0")
+    date = datetime.datetime.now()
+    with open(os.path.join(os.getcwd(),"info.txt"),"a") as f:
+        text = f'{str(date)} :: INFO :: {ex}  :: {op} \n'
+        f.write(text) 
+else :
+    print("Error: Invalid expression")
+    print("Report: INFO-",opCount, ", ERROR-1")
+    date = datetime.datetime.now()
+    with open(os.path.join(os.getcwd(),"error.txt"),"a") as f:
+        text = f'{str(date)} :: ERROR :: Invalid expression  :: {ex} \n'
+        f.write(text)
